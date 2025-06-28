@@ -1,3 +1,4 @@
+
 import application.services.BusService;
 import application.services.CustomerService;
 import application.services.ReservationService;
@@ -12,6 +13,7 @@ import java.util.Optional;
 import java.util.Scanner;
 
 public class Main {
+
     public static void main(String[] args) {
         // Initialize repositories
         InMemoryCustomerRepository customerRepo = new InMemoryCustomerRepository();
@@ -25,7 +27,7 @@ public class Main {
 
         try (Scanner scanner = new Scanner(System.in)) {
             int choice;
-            
+
             do {
                 System.out.println("\n=== Bus Reservation System ===");
                 System.out.println("1. Register Customer");
@@ -34,10 +36,11 @@ public class Main {
                 System.out.println("4. Reserve Seat");
                 System.out.println("5. Cancel Reservation");
                 System.out.println("6. View All Reservations");
+                System.out.println("7. Request Seat Change");
                 System.out.println("0. Exit");
                 System.out.print("Enter choice: ");
                 choice = Integer.parseInt(scanner.nextLine());
-                
+
                 switch (choice) {
                     case 1 -> {
                         System.out.print("Name: ");
@@ -52,7 +55,7 @@ public class Main {
                         int age = Integer.parseInt(scanner.nextLine());
                         customerService.registerCustomer(name, mobile, email, city, age);
                     }
-                    
+
                     case 2 -> {
                         System.out.print("Bus Number: ");
                         String busNum = scanner.nextLine();
@@ -68,7 +71,7 @@ public class Main {
                         double fare = Double.parseDouble(scanner.nextLine());
                         busService.registerBus(busNum, totalSeats, start, end, time, fare);
                     }
-                    
+
                     case 3 -> {
                         System.out.print("From: ");
                         String from = scanner.nextLine();
@@ -84,7 +87,7 @@ public class Main {
                             }
                         }
                     }
-                    
+
                     case 4 -> {
                         System.out.print("Your Mobile: ");
                         String mobile = scanner.nextLine();
@@ -99,14 +102,14 @@ public class Main {
                             System.out.println("Reservation failed.");
                         }
                     }
-                    
+
                     case 5 -> {
                         System.out.print("Reservation ID to cancel: ");
                         String id = scanner.nextLine();
                         boolean cancelled = reservationService.cancelReservation(id);
                         System.out.println(cancelled ? "Cancelled successfully." : "Cancellation failed.");
                     }
-                    
+
                     case 6 -> {
                         List<Reservation> all = reservationService.getAllReservations();
                         if (all.isEmpty()) {
@@ -123,11 +126,30 @@ public class Main {
                             }
                         }
                     }
-                    
-                    case 0 -> System.out.println("Exiting system. Goodbye!");
-                    default -> System.out.println("Invalid choice.");
+
+                    case 7 -> {
+                        System.out.print("Your Reservation ID: ");
+                        String resId = scanner.nextLine();
+                        Optional<Reservation> resOpt = reservationService.getReservationById(resId);
+                        if (resOpt.isEmpty()) {
+                            System.out.println("Reservation not found.");
+                            break;
+                        }
+                        System.out.print("Desired Seat Number: ");
+                        int desired = Integer.parseInt(scanner.nextLine());
+                        if (reservationService.requestSeatChange(resOpt.get(), desired)) {
+                            System.out.println("Seat change request added to queue.");
+                        } else {
+                            System.out.println("Failed to request seat change.");
+                        }
+                    }
+
+                    case 0 ->
+                        System.out.println("Exiting system. Goodbye!");
+                    default ->
+                        System.out.println("Invalid choice.");
                 }
-                
+
             } while (choice != 0);
         }
     }
