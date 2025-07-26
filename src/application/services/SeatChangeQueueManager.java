@@ -18,6 +18,8 @@ public class SeatChangeQueueManager {
 
         System.out.println("Customer " + reservation.getCustomer().getName()
                 + " added to waiting list for seat " + desiredSeatNumber + " on bus " + busNumber);
+        
+        System.out.println("k");
     }
 
     // Process seat availability (called after a seat becomes free)
