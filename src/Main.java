@@ -8,6 +8,7 @@ import infrastructure.repositories.InMemoryBusRepository;
 import infrastructure.repositories.InMemoryCustomerRepository;
 import infrastructure.repositories.InMemoryReservationRepository;
 import java.time.LocalTime;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Optional;
 import java.util.Scanner;
@@ -26,128 +27,167 @@ public class Main {
         ReservationService reservationService = new ReservationService(busRepo, customerRepo, reservationRepo);
 
         try (Scanner scanner = new Scanner(System.in)) {
-            int choice;
+            int choice = -1;
 
             do {
-                System.out.println("\n=== Bus Reservation System ===");
-                System.out.println("1. Register Customer");
-                System.out.println("2. Register Bus");
-                System.out.println("3. Search Buses");
-                System.out.println("4. Reserve Seat");
-                System.out.println("5. Cancel Reservation");
-                System.out.println("6. View All Reservations");
-                System.out.println("7. Request Seat Change");
-                System.out.println("0. Exit");
-                System.out.print("Enter choice: ");
-                choice = Integer.parseInt(scanner.nextLine());
+                try {
+                    System.out.println("""
+   _                                                    _   _             
+  | |__  _   _ ___   _ __ ___  ___  ___ _ ____   ____ _| |_(_) ___  _ __  
+  | '_ \\| | | / __| | '__/ _ \\/ __|/ _ \\ '__\\ \\ / / _` | __| |/ _ \\| '_ \\ 
+  | |_) | |_| \\__ \\ | | |  __/\\__ \\  __/ |   \\ V / (_| | |_| | (_) | | | |
+  |_.__/ \\__,_|___/ |_|  \\___||___/\\___|_|    \\_/ \\__,_|\\__|_|\\___/|_| |_|
+   ___ _   _ ___| |_ ___ _ __ ___                                         
+  / __| | | / __| __/ _ \\ '_ ` _ \\                                        
+  \\__ \\ |_| \\__ \\ ||  __/ | | | | |                                       
+  |___/\\__,_|___/\\__\\___|_| |_| |_|                                       
+""");
 
-                switch (choice) {
-                    case 1 -> {
-                        System.out.print("Name: ");
-                        String name = scanner.nextLine();
-                        System.out.print("Mobile: ");
-                        String mobile = scanner.nextLine();
-                        System.out.print("Email: ");
-                        String email = scanner.nextLine();
-                        System.out.print("City: ");
-                        String city = scanner.nextLine();
-                        System.out.print("Age: ");
-                        int age = Integer.parseInt(scanner.nextLine());
-                        customerService.registerCustomer(name, mobile, email, city, age);
-                    }
+                    System.out.println("1. Register Customer");
+                    System.out.println("2. Register Bus");
+                    System.out.println("3. Search Buses");
+                    System.out.println("4. Reserve Seat");
+                    System.out.println("5. Cancel Reservation");
+                    System.out.println("6. View All Reservations");
+                    System.out.println("7. Request Seat Change");
+                    System.out.println("0. Exit");
+                    System.out.print("Enter choice: ");
+                    choice = Integer.parseInt(scanner.nextLine().trim());
 
-                    case 2 -> {
-                        System.out.print("Bus Number: ");
-                        String busNum = scanner.nextLine();
-                        System.out.print("Total Seats: ");
-                        int totalSeats = Integer.parseInt(scanner.nextLine());
-                        System.out.print("Start Point: ");
-                        String start = scanner.nextLine();
-                        System.out.print("End Point: ");
-                        String end = scanner.nextLine();
-                        System.out.print("Start Time (HH:mm): ");
-                        LocalTime time = LocalTime.parse(scanner.nextLine());
-                        System.out.print("Fare: ");
-                        double fare = Double.parseDouble(scanner.nextLine());
-                        busService.registerBus(busNum, totalSeats, start, end, time, fare);
-                    }
-
-                    case 3 -> {
-                        System.out.print("From: ");
-                        String from = scanner.nextLine();
-                        System.out.print("To: ");
-                        String to = scanner.nextLine();
-                        List<Bus> results = busService.searchBuses(from, to);
-                        if (results.isEmpty()) {
-                            System.out.println("No buses found.");
-                        } else {
-                            System.out.println("Buses found:");
-                            for (Bus b : results) {
-                                System.out.printf("Bus: %s | Time: %s | Fare: %.2f\n", b.getBusNumber(), b.getStartTime(), b.getFare());
+                    switch (choice) {
+                        case 1 -> {
+                            try {
+                                System.out.print("Name: ");
+                                String name = scanner.nextLine();
+                                System.out.print("Mobile: ");
+                                String mobile = scanner.nextLine();
+                                System.out.print("Email: ");
+                                String email = scanner.nextLine();
+                                System.out.print("City: ");
+                                String city = scanner.nextLine();
+                                System.out.print("Age: ");
+                                int age = Integer.parseInt(scanner.nextLine().trim());
+                                customerService.registerCustomer(name, mobile, email, city, age);
+                                System.out.println("Customer registered successfully.");
+                            } catch (NumberFormatException e) {
+                                System.out.println("Invalid input for age. Please enter a valid number.");
                             }
                         }
-                    }
 
-                    case 4 -> {
-                        System.out.print("Your Mobile: ");
-                        String mobile = scanner.nextLine();
-                        System.out.print("Bus Number: ");
-                        String busNum = scanner.nextLine();
-                        System.out.print("Seat Number (0-based): ");
-                        int seat = Integer.parseInt(scanner.nextLine());
-                        Optional<Reservation> r = reservationService.reserveSeat(mobile, busNum, seat);
-                        if (r.isPresent()) {
-                            System.out.println("Reservation successful. ID: " + r.get().getReservationId());
-                        } else {
-                            System.out.println("Reservation failed.");
-                        }
-                    }
-
-                    case 5 -> {
-                        System.out.print("Reservation ID to cancel: ");
-                        String id = scanner.nextLine();
-                        boolean cancelled = reservationService.cancelReservation(id);
-                        System.out.println(cancelled ? "Cancelled successfully." : "Cancellation failed.");
-                    }
-
-                    case 6 -> {
-                        List<Reservation> all = reservationService.getAllReservations();
-                        if (all.isEmpty()) {
-                            System.out.println("No reservations yet.");
-                        } else {
-                            System.out.println("Reservations:");
-                            for (Reservation res : all) {
-                                System.out.printf("ID: %s | Customer: %s | Bus: %s | Seat: %d | Status: %s\n",
-                                        res.getReservationId(),
-                                        res.getCustomer().getName(),
-                                        res.getBus().getBusNumber(),
-                                        res.getSeatNumber(),
-                                        res.getStatus());
+                        case 2 -> {
+                            try {
+                                System.out.print("Bus Number: ");
+                                String busNum = scanner.nextLine();
+                                System.out.print("Total Seats: ");
+                                int totalSeats = Integer.parseInt(scanner.nextLine().trim());
+                                System.out.print("Start Point: ");
+                                String start = scanner.nextLine();
+                                System.out.print("End Point: ");
+                                String end = scanner.nextLine();
+                                System.out.print("Start Time (HH:mm): ");
+                                LocalTime time = LocalTime.parse(scanner.nextLine().trim());
+                                System.out.print("Fare: ");
+                                double fare = Double.parseDouble(scanner.nextLine().trim());
+                                busService.registerBus(busNum, totalSeats, start, end, time, fare);
+                                System.out.println("Bus registered successfully.");
+                            } catch (NumberFormatException e) {
+                                System.out.println("Invalid input for seats or fare. Please enter valid numbers.");
+                            } catch (DateTimeParseException e) {
+                                System.out.println("Invalid time format. Please use HH:mm format.");
                             }
                         }
-                    }
 
-                    case 7 -> {
-                        System.out.print("Your Reservation ID: ");
-                        String resId = scanner.nextLine();
-                        Optional<Reservation> resOpt = reservationService.getReservationById(resId);
-                        if (resOpt.isEmpty()) {
-                            System.out.println("Reservation not found.");
-                            break;
+                        case 3 -> {
+                            System.out.print("From: ");
+                            String from = scanner.nextLine();
+                            System.out.print("To: ");
+                            String to = scanner.nextLine();
+                            List<Bus> results = busService.searchBuses(from, to);
+                            if (results.isEmpty()) {
+                                System.out.println("No buses found.");
+                            } else {
+                                System.out.println("Buses found:");
+                                for (Bus b : results) {
+                                    System.out.printf("Bus: %s | Time: %s | Fare: %.2f\n",
+                                            b.getBusNumber(), b.getStartTime(), b.getFare());
+                                }
+                            }
                         }
-                        System.out.print("Desired Seat Number: ");
-                        int desired = Integer.parseInt(scanner.nextLine());
-                        if (reservationService.requestSeatChange(resOpt.get(), desired)) {
-                            System.out.println("Seat change request added to queue.");
-                        } else {
-                            System.out.println("Failed to request seat change.");
-                        }
-                    }
 
-                    case 0 ->
-                        System.out.println("Exiting system. Goodbye!");
-                    default ->
-                        System.out.println("Invalid choice.");
+                        case 4 -> {
+                            try {
+                                System.out.print("Your Mobile: ");
+                                String mobile = scanner.nextLine();
+                                System.out.print("Bus Number: ");
+                                String busNum = scanner.nextLine();
+                                System.out.print("Seat Number (0-based): ");
+                                int seat = Integer.parseInt(scanner.nextLine().trim());
+                                Optional<Reservation> r = reservationService.reserveSeat(mobile, busNum, seat);
+                                if (r.isPresent()) {
+                                    System.out.println("Reservation successful. ID: " + r.get().getReservationId());
+                                } else {
+                                    System.out.println("Reservation failed. Seat may be unavailable or invalid details.");
+                                }
+                            } catch (NumberFormatException e) {
+                                System.out.println("Invalid seat number. Please enter a valid integer.");
+                            }
+                        }
+
+                        case 5 -> {
+                            System.out.print("Reservation ID to cancel: ");
+                            String id = scanner.nextLine();
+                            boolean cancelled = reservationService.cancelReservation(id);
+                            System.out.println(cancelled ? "Cancelled successfully." : "Cancellation failed. ID may be invalid.");
+                        }
+
+                        case 6 -> {
+                            List<Reservation> all = reservationService.getAllReservations();
+                            if (all.isEmpty()) {
+                                System.out.println("No reservations yet.");
+                            } else {
+                                System.out.println("Reservations:");
+                                for (Reservation res : all) {
+                                    System.out.printf("ID: %s | Customer: %s | Bus: %s | Seat: %d | Status: %s\n",
+                                            res.getReservationId(),
+                                            res.getCustomer().getName(),
+                                            res.getBus().getBusNumber(),
+                                            res.getSeatNumber(),
+                                            res.getStatus());
+                                }
+                            }
+                        }
+
+                        case 7 -> {
+                            try {
+                                System.out.print("Your Reservation ID: ");
+                                String resId = scanner.nextLine();
+                                Optional<Reservation> resOpt = reservationService.getReservationById(resId);
+                                if (resOpt.isEmpty()) {
+                                    System.out.println("Reservation not found.");
+                                    break;
+                                }
+                                System.out.print("Desired Seat Number: ");
+                                int desired = Integer.parseInt(scanner.nextLine().trim());
+                                if (reservationService.requestSeatChange(resOpt.get(), desired)) {
+                                    System.out.println("Seat change request added to queue.");
+                                } else {
+                                    System.out.println("Failed to request seat change. Seat may already be available.");
+                                }
+                            } catch (NumberFormatException e) {
+                                System.out.println("Invalid seat number. Please enter a valid integer.");
+                            }
+                        }
+
+                        case 0 ->
+                            System.out.println("Exiting system. Goodbye!");
+
+                        default ->
+                            System.out.println("Invalid choice. Please try again.");
+                    }
+                } catch (NumberFormatException e) {
+                    System.out.println("Please enter a valid number for menu choice.");
+                } catch (Exception e) {
+                    System.out.println("An unexpected error occurred: " + e.getMessage());
                 }
 
             } while (choice != 0);
